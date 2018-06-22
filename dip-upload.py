@@ -22,7 +22,7 @@ with SCPClient(ssh.get_transport(), sanitize=dummy_sanitizer) as scp:
 	scp.put(local_dip_path, remote_dip_path, recursive=True)
 
 stdin, stdout, stderr = ssh.exec_command("php /usr/share/nginx/atom/symfony import:dip-objects " + remote_dip_path)
-stdin, stdout, stderr = ssh.exec_command("/opt/cleanNginxHome.sh")
+ssh.exec_command("/opt/cleanNginxHome.sh")
 
 for x in stdout.readlines():
 	if not x.isspace():
