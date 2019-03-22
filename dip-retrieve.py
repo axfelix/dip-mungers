@@ -5,6 +5,7 @@ import shutil
 import sys
 import csv
 import os
+import re
 
 def dummy_sanitizer(s):
 	return s
@@ -18,11 +19,20 @@ ssh.set_missing_host_key_policy(AutoAddPolicy())
 ssh.connect((sys.argv[1] + ".archives.sfu.ca"), username=sys.argv[2])
 
 transfer_name = sys.argv[3]
-dip_path = '/var/archivematica/sharedDirectory/watchedDirectories/uploadedDIPs/' + transfer_name + "*/"
+if not re.search("[A-Z]", transfer_name):
+	dip_path_1 = '/var/archivematica/sharedDirectory/watchedDirectories/uploadedDIPs/*' + transfer_name + "/"
+	dip_path_2 = '/var/archivematica/sharedDirectory/watchedDirectories/uploadDIP/*' + transfer_name + "/"
+else:
+	dip_path_1 = '/var/archivematica/sharedDirectory/watchedDirectories/uploadedDIPs/' + transfer_name + "*/"
+	dip_path_2 = '/var/archivematica/sharedDirectory/watchedDirectories/uploadDIP/' + transfer_name + "*/"
 
 desktop_path = (os.path.expanduser("~/Desktop")  + "/" + transfer_name)
-with SCPClient(ssh.get_transport(), sanitize=dummy_sanitizer) as scp:
-	scp.get(dip_path, desktop_path, recursive=True)
+try:
+	with SCPClient(ssh.get_transport(), sanitize=dummy_sanitizer) as scp:
+		scp.get(dip_path_1, desktop_path, recursive=True)
+except:
+	with SCPClient(ssh.get_transport(), sanitize=dummy_sanitizer) as scp:
+		scp.get(dip_path_2, desktop_path, recursive=True)
 
 csv_path = (desktop_path + "/objects/" + transfer_name + ".csv")
 objects_list = os.listdir(desktop_path + "/objects")

@@ -32,16 +32,23 @@ metstree = xmltodict.parse(mets)
 
 with open(os.path.normpath(os.path.expanduser("~/.atomapi")), "r") as apikey:
 	api_token = apikey.read()
+api_token = api_token.rstrip()
 
 client = atom.AtomClient(("https://" + sys.argv[1] + ".archives.sfu.ca"), api_token, 443)
 
 for dip_name in dip_names:
-	dip_name["filename"] = re.sub(r"\S+?-\S+?-\S+?-\S+?-\S+?-", "", dip_name["filename"])
+	dip_name["filename"] = re.sub(r"^\S+?-\S+?-\S+?-\S+?-\S+?-", "", dip_name["filename"])
 	for techMD in metstree["mets:mets"]["mets:amdSec"]:
 		try:
 			if os.path.splitext(techMD["mets:techMD"]["mets:mdWrap"]["mets:xmlData"]["premis:object"]["premis:objectCharacteristics"]["premis:objectCharacteristicsExtension"]["rdf:RDF"]["rdf:Description"]["System:FileName"])[0] == os.path.splitext(dip_name["filename"])[0]:
 				size = techMD["mets:techMD"]["mets:mdWrap"]["mets:xmlData"]["premis:object"]["premis:objectCharacteristics"]["premis:objectCharacteristicsExtension"]["rdf:RDF"]["rdf:Description"]["System:FileSize"]
+				object_type = techMD["mets:techMD"]["mets:mdWrap"]["mets:xmlData"]["premis:object"]["premis:objectCharacteristics"]["premis:format"]["premis:formatDesignation"]["premis:formatName"]
+				file_uuid = techMD["mets:techMD"]["mets:mdWrap"]["mets:xmlData"]["premis:object"]["premis:objectIdentifier"]["premis:objectIdentifierValue"]
 		except:
 			pass
 
-	client.add_digital_object(dip_name["slug"], title=dip_name["filename"], size=size)
+	try:
+		client.add_digital_object(dip_name["slug"], title=dip_name["filename"], size=size, object_type=object_type, file_uuid=file_uuid)
+		print("Uploaded metadata for " + dip_name["filename"])
+	except NameError:
+		print("Couldn't upload metadata for " + dip_name["filename"])
